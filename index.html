@@ -3,11 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Job Application Assistant with Tracker</title>
+    <title>Job Application Assistant with Interview Prep</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; }
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: #fff;
+            animation: spin 1s ease infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body class="bg-gray-100 p-8 flex items-center justify-center min-h-screen">
@@ -57,6 +69,24 @@
             </div>
         </div>
 
+        <div class="mt-8" id="interview_prep_container">
+            <h2 class="text-xl font-semibold text-gray-700 mb-4 text-center">Interview Prep Answers</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="bg-gray-50 p-6 rounded-lg shadow-inner">
+                    <label for="why_company" class="block text-sm font-medium text-gray-700">1. Why [COMPANY NAME]?</label>
+                    <textarea id="why_company" rows="6" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2"></textarea>
+                </div>
+                <div class="bg-gray-50 p-6 rounded-lg shadow-inner">
+                    <label for="why_this_position" class="block text-sm font-medium text-gray-700">2. Why this [JOB TITLE]/industry?</label>
+                    <textarea id="why_this_position" rows="6" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2"></textarea>
+                </div>
+                <div class="bg-gray-50 p-6 rounded-lg shadow-inner">
+                    <label for="why_qualified" class="block text-sm font-medium text-gray-700">3. Why are you qualified?</label>
+                    <textarea id="why_qualified" rows="6" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2"></textarea>
+                </div>
+            </div>
+        </div>
+        
         <div class="mt-8 bg-blue-50 p-6 rounded-lg shadow-inner border-l-4 border-blue-400" id="message_box" style="display: none;">
             <p class="text-blue-800 font-medium"></p>
         </div>
@@ -79,7 +109,7 @@
         
         <div class="mt-12">
             <h2 class="text-3xl font-bold text-gray-800 text-center mb-6">Application Tracker</h2>
-            <div class="bg-gray-50 p-6 rounded-lg shadow-inner">
+            <div class="bg-gray-50 p-6 rounded-lg shadow-inner mt-4">
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-100">
@@ -110,10 +140,49 @@
             
             const cvSummaryEl = document.getElementById('cv_summary');
             const coverLetterTemplateEl = document.getElementById('cover_letter_template');
+            const whyCompanyEl = document.getElementById('why_company');
+            const whyThisPositionEl = document.getElementById('why_this_position');
+            const whyQualifiedEl = document.getElementById('why_qualified');
             
-            // Pre-fill with a core brand statement and template
-            cvSummaryEl.value = "A purpose-driven engineer and systems thinker with a rare blend of technical acumen, strategic patience, and human-centered design. I am seeking to apply my expertise to a mission-driven organization where I can contribute to building a better future.";
-            coverLetterTemplateEl.value = `Dear [Recruiter Name],
+            // Function to load data from localStorage
+            const loadData = () => {
+                const savedCvSummary = localStorage.getItem('cvSummary');
+                const savedCoverLetterTemplate = localStorage.getItem('coverLetterTemplate');
+                const savedInterviewAnswers = localStorage.getItem('interviewAnswers');
+
+                if (savedCvSummary) cvSummaryEl.value = savedCvSummary;
+                if (savedCoverLetterTemplate) coverLetterTemplateEl.value = savedCoverLetterTemplate;
+                if (savedInterviewAnswers) {
+                    const answers = JSON.parse(savedInterviewAnswers);
+                    whyCompanyEl.value = answers.whyCompany;
+                    whyThisPositionEl.value = answers.whyThisPosition;
+                    whyQualifiedEl.value = answers.whyQualified;
+                } else {
+                    // Pre-fill with the Vattenfall interview answers if no data is found
+                    whyCompanyEl.value = `My interest in [COMPANY NAME] is deeply rooted in its clear and inspiring mission: "fossil freedom". I am a purpose-driven engineer with a strong passion for sustainable infrastructure, and [COMPANY NAME]’s commitment to making fossil-free living possible within one generation resonates profoundly with my personal and professional goals. This is more than just a job for me; it's an opportunity to contribute my skills and expertise to a mission that I truly believe in.
+
+Furthermore, I am drawn to [COMPANY NAME]'s position as a leader in the renewable energy sector. The focus on developing, building, and operating Battery Energy Storage Systems (BESS) is at the forefront of the industry's advancements, and it's an area where I am eager to apply and expand my knowledge. The company's century-long history of modernizing our way of living through innovation and cooperation is a testament to its forward-thinking culture, and I am excited by the prospect of joining a team that is pushing the boundaries of technology in renewable energy storage.`;
+
+                    whyThisPositionEl.value = `This specific [JOB TITLE] role within the(....) team is an ideal next step for me because it directly combines my systems design and project management background with my passion for the renewable energy industry. The role's emphasis on technical execution, from design and feasibility to delivery oversight, aligns with my experience as a Senior Product Operations Lead, where I drove the end-to-end deployment of IoT-enabled devices. I am particularly excited by the opportunity to apply my expertise in optimizing operational efficiency and developing data-driven workflows to the crucial area of battery energy storage.
+
+The energy storage industry itself is a perfect fit for my skills and interests. As a "systems thinker," I am drawn to the complexity and strategic importance of BESS in ensuring power system stability and supporting smart grids. This role allows me to directly translate my skills in project lifecycle management, stakeholder collaboration, and continuous improvement into a sector that is vital for achieving a sustainable future.`;
+
+                    whyQualifiedEl.value = `I am well-qualified for this role based on my combined educational background, professional experience, and technical skills. The job description lists several key qualifications, and I possess a strong alignment with them:
+
+Education and Experience: I hold a Bachelor's in Electrical and Electronic Engineering and am currently pursuing a Master's in Engineering Management. With over three years of professional experience in engineering and operations roles, I have a solid foundation in the field, with a particular focus on systems and renewable energy.
+
+Engineering and Project Management: As a Senior Product Operations Lead at Ilara Health, I led the deployment of over 2,000 devices using Agile project management frameworks. This demonstrates my ability to "drive the engineering and technical development of BESS projects" and ensure "highest engineering standards throughout the project lifecycle". My experience with tools like Jira, Notion, and Power BI also supports the responsibility of creating and refining engineering processes and methodologies.
+
+Technical and Soft Skills: My previous roles have given me hands-on experience with industrial equipment, motor control systems, and power systems. I have also developed strong interpersonal and communication skills, which are essential for stakeholder collaboration. My problem-solving skills and passion for technical excellence align perfectly with [COMPANY NAME]'s requirements for a successful candidate.
+I am confident that my blend of technical acumen, strategic patience, and practical experience in systems deployment makes me a strong candidate to help [COMPANY NAME] achieve its ambitious goals.`;
+                }
+
+                if (!cvSummaryEl.value) {
+                    cvSummaryEl.value = "A purpose-driven engineer and systems thinker with a rare blend of technical acumen, strategic patience, and human-centered design. I am seeking to apply my expertise to a mission-driven organization where I can contribute to building a better future.";
+                }
+                
+                if (!coverLetterTemplateEl.value) {
+                    coverLetterTemplateEl.value = `Dear [Recruiter Name],
 
 I am writing to express my strong interest in the [Job Title] role at [Company Name]. My experience in [Your Top Skill] and my passion for [Your Passion] make me a strong candidate for this position.
 
@@ -125,11 +194,36 @@ I have attached my CV for your review and look forward to the possibility of dis
 
 Best regards,
 Clifford Omari Ondieki`;
+                }
+            };
+            
+            // Function to save data to localStorage
+            const saveData = () => {
+                localStorage.setItem('cvSummary', cvSummaryEl.value);
+                localStorage.setItem('coverLetterTemplate', coverLetterTemplateEl.value);
+                const interviewAnswers = {
+                    whyCompany: whyCompanyEl.value,
+                    whyThisPosition: whyThisPositionEl.value,
+                    whyQualified: whyQualifiedEl.value
+                };
+                localStorage.setItem('interviewAnswers', JSON.stringify(interviewAnswers));
+            };
+
+            loadData();
+            
+            // Attach event listeners to all textareas to save data on input
+            [cvSummaryEl, coverLetterTemplateEl, whyCompanyEl, whyThisPositionEl, whyQualifiedEl].forEach(el => {
+                el.addEventListener('input', saveData);
+            });
 
             let applications = JSON.parse(localStorage.getItem('applications')) || [];
 
             function renderApplications() {
                 applicationList.innerHTML = '';
+                if (applications.length === 0) {
+                    applicationList.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-gray-500">No applications tracked yet.</td></tr>';
+                    return;
+                }
                 applications.forEach((app, index) => {
                     const row = document.createElement('tr');
                     row.innerHTML = `
@@ -140,6 +234,7 @@ Clifford Omari Ondieki`;
                             <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">${app.status}</span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <a href="${app.url}" class="text-indigo-600 hover:text-indigo-900 mr-4" target="_blank" rel="noopener noreferrer">View</a>
                             <button onclick="deleteApplication(${index})" class="text-red-600 hover:text-red-900 transition-colors duration-200">Delete</button>
                         </td>
                     `;
@@ -189,6 +284,27 @@ Clifford Omari Ondieki`;
                 document.getElementById('email_body').value = coverLetterBody;
                 draftContainer.style.display = 'block';
                 showMessage("Application draft generated and added to tracker successfully. Please review and customize before sending.", "bg-green-50 border-green-400 text-green-800");
+
+                // Update interview answers with new job details
+                const updatedWhyCompany = whyCompanyEl.value
+                    .replace(/\[COMPANY NAME\]/g, companyName)
+                    .replace(/\[JOB TITLE\]/g, jobTitle);
+                
+                const updatedWhyThisPosition = whyThisPositionEl.value
+                    .replace(/\[COMPANY NAME\]/g, companyName)
+                    .replace(/\[JOB TITLE\]/g, jobTitle)
+                    .replace(/\[TOP SKILLS\]/g, 'systems design and project management');
+                
+                const updatedWhyQualified = whyQualifiedEl.value
+                    .replace(/\[COMPANY NAME\]/g, companyName)
+                    .replace(/\[JOB TITLE\]/g, jobTitle)
+                    .replace(/\[TOP SKILLS\]/g, 'engineering, operations, and project management');
+
+                whyCompanyEl.value = updatedWhyCompany;
+                whyThisPositionEl.value = updatedWhyThisPosition;
+                whyQualifiedEl.value = updatedWhyQualified;
+
+                saveData();
             });
 
             copyBtn.addEventListener('click', () => {
