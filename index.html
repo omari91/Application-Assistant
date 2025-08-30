@@ -3,23 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Job Application Assistant with Sheets</title>
+    <title>Job Application Assistant with Tracker</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; }
-        .spinner {
-            border: 4px solid rgba(0, 0, 0, 0.1);
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            border-left-color: #fff;
-            animation: spin 1s ease infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
     </style>
 </head>
 <body class="bg-gray-100 p-8 flex items-center justify-center min-h-screen">
@@ -64,9 +52,7 @@
                         <label for="recruiter_name" class="block text-sm font-medium text-gray-700">Recruiter's Name (Optional)</label>
                         <input type="text" id="recruiter_name" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2" placeholder="e.g., Andrea (from NIRX)">
                     </div>
-                    <button id="generate_draft_btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg shadow-md transition-all duration-300 flex items-center justify-center">
-                        Generate & Track Application
-                    </button>
+                    <button id="generate_draft_btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg shadow-md transition-all duration-300">Generate & Track Application</button>
                 </div>
             </div>
         </div>
@@ -93,8 +79,7 @@
         
         <div class="mt-12">
             <h2 class="text-3xl font-bold text-gray-800 text-center mb-6">Application Tracker</h2>
-            <p class="text-gray-600 text-center">Your applications are being tracked in your Google Spreadsheet.</p>
-            <div class="bg-gray-50 p-6 rounded-lg shadow-inner mt-4">
+            <div class="bg-gray-50 p-6 rounded-lg shadow-inner">
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-100">
@@ -103,11 +88,11 @@
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Company</th>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Job Title</th>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">URL</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
                         <tbody id="application_list" class="bg-white divide-y divide-gray-200">
-                            <tr><td colspan="5" class="px-6 py-4 text-center text-gray-500">View your applications in your linked Google Sheet.</td></tr>
+                            <!-- Application rows will be added here -->
                         </tbody>
                     </table>
                 </div>
@@ -121,14 +106,11 @@
             const copyBtn = document.getElementById('copy_to_clipboard_btn');
             const draftContainer = document.getElementById('draft_container');
             const messageBox = document.getElementById('message_box');
+            const applicationList = document.getElementById('application_list');
             
             const cvSummaryEl = document.getElementById('cv_summary');
             const coverLetterTemplateEl = document.getElementById('cover_letter_template');
             
-            // ** IMPORTANT **
-            // Use the specific URL from your Google Apps Script deployment.
-            const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyY9eFXob7Xl4gQYPOY-W1sBLENiGMq-ATrRZDljCO-Jp6QraHFNj04cob3eEJ97ZmbTQ/exec"; 
-
             // Pre-fill with a core brand statement and template
             cvSummaryEl.value = "A purpose-driven engineer and systems thinker with a rare blend of technical acumen, strategic patience, and human-centered design. I am seeking to apply my expertise to a mission-driven organization where I can contribute to building a better future.";
             coverLetterTemplateEl.value = `Dear [Recruiter Name],
@@ -144,49 +126,57 @@ I have attached my CV for your review and look forward to the possibility of dis
 Best regards,
 Clifford Omari Ondieki`;
 
-            const addApplicationToSheet = async (appData) => {
-                try {
-                    await fetch(SCRIPT_URL, {
-                        method: 'POST',
-                        mode: 'no-cors',
-                        cache: 'no-cache',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(appData),
-                    });
-                    return true;
-                } catch (error) {
-                    console.error("Error adding application to sheet:", error);
-                    showMessage("Error adding application to sheet. Please check your script URL and permissions.", "bg-red-50 border-red-400 text-red-800");
-                    return false;
-                }
+            let applications = JSON.parse(localStorage.getItem('applications')) || [];
+
+            function renderApplications() {
+                applicationList.innerHTML = '';
+                applications.forEach((app, index) => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${app.date}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${app.company}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${app.jobTitle}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">${app.status}</span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <button onclick="deleteApplication(${index})" class="text-red-600 hover:text-red-900 transition-colors duration-200">Delete</button>
+                        </td>
+                    `;
+                    applicationList.appendChild(row);
+                });
+            }
+
+            window.deleteApplication = (index) => {
+                applications.splice(index, 1);
+                localStorage.setItem('applications', JSON.stringify(applications));
+                renderApplications();
             };
 
-            generateBtn.addEventListener('click', async () => {
+            generateBtn.addEventListener('click', () => {
                 const companyName = document.getElementById('company_name').value.trim();
                 const jobTitle = document.getElementById('job_title').value.trim();
                 const recruiterName = document.getElementById('recruiter_name').value.trim() || '[Recruiter Name]';
                 const jobUrl = document.getElementById('job_url').value.trim();
 
                 if (!companyName || !jobTitle) {
-                    showMessage("Please fill in company name and job title.", "bg-red-50 border-red-400 text-red-800");
+                    showMessage("Please enter both a company name and a job title.", "bg-red-50 border-red-400 text-red-800");
                     return;
                 }
                 
-                generateBtn.innerHTML = '<span class="spinner"></span> Generating...';
-                generateBtn.disabled = true;
-
-                const appData = {
+                // Add to tracker
+                const newApplication = {
                     date: new Date().toLocaleDateString(),
                     company: companyName,
                     jobTitle: jobTitle,
                     status: 'Drafting',
                     url: jobUrl
                 };
+                applications.push(newApplication);
+                localStorage.setItem('applications', JSON.stringify(applications));
+                renderApplications();
 
-                const success = await addApplicationToSheet(appData);
-
+                // Generate email draft
                 const subject = `Application for ${jobTitle} at ${companyName}`;
                 const coverLetterBody = coverLetterTemplateEl.value
                     .replace(/\[Recruiter Name\]/g, recruiterName)
@@ -198,13 +188,7 @@ Clifford Omari Ondieki`;
                 document.getElementById('email_subject').value = subject;
                 document.getElementById('email_body').value = coverLetterBody;
                 draftContainer.style.display = 'block';
-
-                if (success) {
-                    showMessage("Application draft generated and added to your Google Sheet successfully!", "bg-green-50 border-green-400 text-green-800");
-                }
-                
-                generateBtn.innerHTML = 'Generate & Track Application';
-                generateBtn.disabled = false;
+                showMessage("Application draft generated and added to tracker successfully. Please review and customize before sending.", "bg-green-50 border-green-400 text-green-800");
             });
 
             copyBtn.addEventListener('click', () => {
@@ -222,6 +206,8 @@ Clifford Omari Ondieki`;
                     messageBox.style.display = 'none';
                 }, 5000);
             }
+
+            renderApplications();
         });
     </script>
 </body>
