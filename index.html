@@ -3,188 +3,437 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Job Application Assistant with Interview Prep</title>
+    <title>Job Application Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'sans': ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     <style>
         body { font-family: 'Inter', sans-serif; }
-        .spinner {
-            border: 4px solid rgba(0, 0, 0, 0.1);
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            border-left-color: #fff;
-            animation: spin 1s ease infinite;
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        .card-hover {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .status-applied { @apply bg-blue-100 text-blue-800; }
+        .status-interview { @apply bg-yellow-100 text-yellow-800; }
+        .status-offer { @apply bg-green-100 text-green-800; }
+        .status-rejected { @apply bg-red-100 text-red-800; }
+        .status-drafting { @apply bg-gray-100 text-gray-800; }
     </style>
 </head>
-<body class="bg-gray-100 p-8 flex items-center justify-center min-h-screen">
-
-    <div class="w-full max-w-6xl bg-white rounded-xl shadow-lg p-8">
-        <h1 class="text-3xl font-bold text-gray-800 text-center mb-6">Job Application Assistant</h1>
-        <p class="text-gray-600 text-center mb-8">Your tool for a strategic and aligned job search. Fill in the details to create a tailored application draft and track your progress.</p>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <!-- CV and Cover Letter Management -->
-            <div class="bg-gray-50 p-6 rounded-lg shadow-inner">
-                <h2 class="text-xl font-semibold text-gray-700 mb-4">My Application Assets</h2>
-                <div class="space-y-4">
-                    <div>
-                        <label for="cv_summary" class="block text-sm font-medium text-gray-700">CV Summary / Personal Statement</label>
-                        <textarea id="cv_summary" rows="4" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2" placeholder="Your core brand statement (e.g., Alchemical Architect)..."></textarea>
+<body class="bg-gradient-to-br from-blue-50 via-white to-indigo-50 min-h-screen">
+    <!-- Navigation -->
+    <nav class="glass-effect sticky top-0 z-50 border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
+                        <i data-lucide="briefcase" class="w-5 h-5 text-white"></i>
                     </div>
-                    <div>
-                        <label for="cover_letter_template" class="block text-sm font-medium text-gray-700">Cover Letter Template</label>
-                        <textarea id="cover_letter_template" rows="6" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2" placeholder="Dear [Recruiter Name], I am writing to express my strong interest in the [Job Title] role..."></textarea>
+                    <h1 class="text-xl font-bold text-gray-900">Job Dashboard</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button id="nav-overview" class="nav-btn px-4 py-2 rounded-lg font-medium transition-all duration-200 bg-primary-600 text-white">Overview</button>
+                    <button id="nav-applications" class="nav-btn px-4 py-2 rounded-lg font-medium transition-all duration-200 text-gray-600 hover:text-gray-900">Applications</button>
+                    <button id="nav-templates" class="nav-btn px-4 py-2 rounded-lg font-medium transition-all duration-200 text-gray-600 hover:text-gray-900">Templates</button>
+                    <button id="nav-interview" class="nav-btn px-4 py-2 rounded-lg font-medium transition-all duration-200 text-gray-600 hover:text-gray-900">Interview Prep</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Overview Section -->
+        <div id="overview-section" class="section">
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 card-hover">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Total Applications</p>
+                            <p id="total-apps" class="text-2xl font-bold text-gray-900">0</p>
+                        </div>
+                        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <i data-lucide="send" class="w-6 h-6 text-blue-600"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 card-hover">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Interviews</p>
+                            <p id="interview-count" class="text-2xl font-bold text-gray-900">0</p>
+                        </div>
+                        <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                            <i data-lucide="calendar" class="w-6 h-6 text-yellow-600"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 card-hover">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Offers</p>
+                            <p id="offer-count" class="text-2xl font-bold text-gray-900">0</p>
+                        </div>
+                        <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                            <i data-lucide="check-circle" class="w-6 h-6 text-green-600"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 card-hover">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Success Rate</p>
+                            <p id="success-rate" class="text-2xl font-bold text-gray-900">0%</p>
+                        </div>
+                        <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                            <i data-lucide="trending-up" class="w-6 h-6 text-purple-600"></i>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Job Search and Application Form -->
-            <div class="bg-gray-50 p-6 rounded-lg shadow-inner">
-                <h2 class="text-xl font-semibold text-gray-700 mb-4">Job Details</h2>
-                <div class="space-y-4">
-                    <div>
-                        <label for="company_name" class="block text-sm font-medium text-gray-700">Company Name</label>
-                        <input type="text" id="company_name" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2" placeholder="e.g., Vattenfall, Cloover">
-                    </div>
-                    <div>
-                        <label for="job_title" class="block text-sm font-medium text-gray-700">Job Title</label>
-                        <input type="text" id="job_title" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2" placeholder="e.g., Systems Analyst, Product Operations Lead">
-                    </div>
-                    <div>
-                        <label for="job_url" class="block text-sm font-medium text-gray-700">Job Posting URL</label>
-                        <input type="url" id="job_url" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2" placeholder="e.g., https://careers.vattenfall.com/job/...">
-                    </div>
-                    <div>
-                        <label for="recruiter_name" class="block text-sm font-medium text-gray-700">Recruiter's Name (Optional)</label>
-                        <input type="text" id="recruiter_name" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2" placeholder="e.g., Andrea (from NIRX)">
-                    </div>
-                    <button id="generate_draft_btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg shadow-md transition-all duration-300">Generate & Track Application</button>
+            <!-- Quick Actions -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <i data-lucide="zap" class="w-5 h-5 mr-2 text-primary-600"></i>
+                    Quick Actions
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <button id="quick-new-app" class="flex items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-primary-500 hover:bg-primary-50 transition-all duration-200">
+                        <i data-lucide="plus" class="w-5 h-5 mr-2 text-gray-600"></i>
+                        <span class="font-medium text-gray-700">New Application</span>
+                    </button>
+                    <button id="quick-templates" class="flex items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-primary-500 hover:bg-primary-50 transition-all duration-200">
+                        <i data-lucide="file-text" class="w-5 h-5 mr-2 text-gray-600"></i>
+                        <span class="font-medium text-gray-700">Edit Templates</span>
+                    </button>
+                    <button id="quick-interview" class="flex items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-primary-500 hover:bg-primary-50 transition-all duration-200">
+                        <i data-lucide="mic" class="w-5 h-5 mr-2 text-gray-600"></i>
+                        <span class="font-medium text-gray-700">Interview Prep</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Recent Applications -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <i data-lucide="clock" class="w-5 h-5 mr-2 text-primary-600"></i>
+                    Recent Applications
+                </h2>
+                <div id="recent-applications" class="space-y-3">
+                    <p class="text-gray-500 text-center py-8">No applications yet. Create your first application to get started!</p>
                 </div>
             </div>
         </div>
 
-        <div class="mt-8" id="interview_prep_container">
-            <h2 class="text-xl font-semibold text-gray-700 mb-4 text-center">Interview Prep Answers</h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div class="bg-gray-50 p-6 rounded-lg shadow-inner">
-                    <label for="why_company" class="block text-sm font-medium text-gray-700">1. Why [COMPANY NAME]?</label>
-                    <textarea id="why_company" rows="6" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2"></textarea>
-                </div>
-                <div class="bg-gray-50 p-6 rounded-lg shadow-inner">
-                    <label for="why_this_position" class="block text-sm font-medium text-gray-700">2. Why this [JOB TITLE]/industry?</label>
-                    <textarea id="why_this_position" rows="6" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2"></textarea>
-                </div>
-                <div class="bg-gray-50 p-6 rounded-lg shadow-inner">
-                    <label for="why_qualified" class="block text-sm font-medium text-gray-700">3. Why are you qualified?</label>
-                    <textarea id="why_qualified" rows="6" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2"></textarea>
-                </div>
+        <!-- Applications Section -->
+        <div id="applications-section" class="section hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-900">Application Tracker</h2>
+                <button id="new-application-btn" class="bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-lg shadow-sm transition-all duration-200 flex items-center">
+                    <i data-lucide="plus" class="w-4 h-4 mr-2"></i>
+                    New Application
+                </button>
             </div>
-        </div>
-        
-        <div class="mt-8 bg-blue-50 p-6 rounded-lg shadow-inner border-l-4 border-blue-400" id="message_box" style="display: none;">
-            <p class="text-blue-800 font-medium"></p>
-        </div>
 
-        <!-- Generated Email Draft Section -->
-        <div class="mt-8" id="draft_container" style="display: none;">
-            <h2 class="text-xl font-semibold text-gray-700 mb-4">Generated Email Draft</h2>
-            <div class="bg-gray-50 p-6 rounded-lg shadow-inner">
-                <div class="flex justify-between items-center mb-4">
-                    <span class="text-sm font-medium text-gray-600">Subject:</span>
-                    <input type="text" id="email_subject" class="flex-grow ml-2 rounded-md border-gray-300 shadow-sm sm:text-sm p-1">
+            <!-- Application Form Modal -->
+            <div id="application-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+                <div class="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                    <div class="p-6 border-b border-gray-200">
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-lg font-semibold text-gray-900">New Job Application</h3>
+                            <button id="close-modal" class="text-gray-400 hover:text-gray-600 transition-colors">
+                                <i data-lucide="x" class="w-6 h-6"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="p-6 space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="company_name" class="block text-sm font-medium text-gray-700 mb-1">Company Name</label>
+                                <input type="text" id="company_name" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 p-3" placeholder="e.g., Vattenfall">
+                            </div>
+                            <div>
+                                <label for="job_title" class="block text-sm font-medium text-gray-700 mb-1">Job Title</label>
+                                <input type="text" id="job_title" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 p-3" placeholder="e.g., Systems Analyst">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="job_url" class="block text-sm font-medium text-gray-700 mb-1">Job Posting URL</label>
+                                <input type="url" id="job_url" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 p-3" placeholder="https://careers.company.com/job/...">
+                            </div>
+                            <div>
+                                <label for="recruiter_name" class="block text-sm font-medium text-gray-700 mb-1">Recruiter Name (Optional)</label>
+                                <input type="text" id="recruiter_name" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 p-3" placeholder="e.g., Andrea">
+                            </div>
+                        </div>
+                        <div>
+                            <label for="salary_range" class="block text-sm font-medium text-gray-700 mb-1">Salary Range (Optional)</label>
+                            <input type="text" id="salary_range" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 p-3" placeholder="e.g., €60,000 - €80,000">
+                        </div>
+                        <div>
+                            <label for="notes" class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                            <textarea id="notes" rows="3" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 p-3" placeholder="Any additional notes about this application..."></textarea>
+                        </div>
+                    </div>
+                    <div class="p-6 border-t border-gray-200 flex justify-end space-x-3">
+                        <button id="cancel-application" class="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition-colors">Cancel</button>
+                        <button id="save-application" class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium transition-colors">Generate & Save</button>
+                    </div>
                 </div>
-                <div class="flex justify-between items-start mb-4">
-                    <span class="text-sm font-medium text-gray-600">Body:</span>
-                    <textarea id="email_body" rows="15" class="flex-grow ml-2 rounded-md border-gray-300 shadow-sm sm:text-sm p-2"></textarea>
-                </div>
-                <button id="copy_to_clipboard_btn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg shadow-md transition-all duration-300">Copy to Clipboard</button>
             </div>
-        </div>
-        
-        <div class="mt-12">
-            <h2 class="text-3xl font-bold text-gray-800 text-center mb-6">Application Tracker</h2>
-            <div class="bg-gray-50 p-6 rounded-lg shadow-inner mt-4">
+
+            <!-- Applications Table -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-100">
+                        <thead class="bg-gray-50">
                             <tr>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Applied</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Company</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Job Title</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Company</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Position</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Applied</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Salary</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
                         <tbody id="application_list" class="bg-white divide-y divide-gray-200">
-                            <!-- Application rows will be added here -->
+                            <!-- Applications will be rendered here -->
                         </tbody>
                     </table>
                 </div>
             </div>
         </div>
+
+        <!-- Templates Section -->
+        <div id="templates-section" class="section hidden">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">Application Templates</h2>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <i data-lucide="user" class="w-5 h-5 mr-2 text-primary-600"></i>
+                        CV Summary
+                    </h3>
+                    <textarea id="cv_summary" rows="6" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 p-3" placeholder="Your core brand statement and professional summary..."></textarea>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <i data-lucide="mail" class="w-5 h-5 mr-2 text-primary-600"></i>
+                        Cover Letter Template
+                    </h3>
+                    <textarea id="cover_letter_template" rows="12" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 p-3" placeholder="Dear [Recruiter Name], I am writing to express my strong interest in the [Job Title] role..."></textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- Interview Prep Section -->
+        <div id="interview-section" class="section hidden">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">Interview Preparation</h2>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <i data-lucide="heart" class="w-5 h-5 mr-2 text-red-500"></i>
+                        Why [COMPANY NAME]?
+                    </h3>
+                    <textarea id="why_company" rows="8" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 p-3" placeholder="Your passion for the company's mission and values..."></textarea>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <i data-lucide="target" class="w-5 h-5 mr-2 text-blue-500"></i>
+                        Why this [JOB TITLE]?
+                    </h3>
+                    <textarea id="why_this_position" rows="8" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 p-3" placeholder="Your interest in this specific role and industry..."></textarea>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <i data-lucide="award" class="w-5 h-5 mr-2 text-green-500"></i>
+                        Why are you qualified?
+                    </h3>
+                    <textarea id="why_qualified" rows="8" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 p-3" placeholder="Your relevant skills, experience, and achievements..."></textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- Generated Draft Modal -->
+        <div id="draft-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+            <div class="bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                <div class="p-6 border-b border-gray-200">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-lg font-semibold text-gray-900">Generated Application Draft</h3>
+                        <button id="close-draft-modal" class="text-gray-400 hover:text-gray-600 transition-colors">
+                            <i data-lucide="x" class="w-6 h-6"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="p-6 space-y-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Email Subject</label>
+                        <input type="text" id="email_subject" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 p-3" readonly>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Cover Letter</label>
+                        <textarea id="email_body" rows="15" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 p-3"></textarea>
+                    </div>
+                </div>
+                <div class="p-6 border-t border-gray-200 flex justify-end space-x-3">
+                    <button id="copy_to_clipboard_btn" class="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors flex items-center">
+                        <i data-lucide="copy" class="w-4 h-4 mr-2"></i>
+                        Copy to Clipboard
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toast Notification -->
+        <div id="toast" class="fixed bottom-4 right-4 bg-white border border-gray-200 rounded-lg shadow-lg p-4 transform translate-y-full opacity-0 transition-all duration-300 z-50">
+            <div class="flex items-center">
+                <div id="toast-icon" class="w-5 h-5 mr-3"></div>
+                <p id="toast-message" class="text-sm font-medium text-gray-900"></p>
+            </div>
+        </div>
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const generateBtn = document.getElementById('generate_draft_btn');
-            const copyBtn = document.getElementById('copy_to_clipboard_btn');
-            const draftContainer = document.getElementById('draft_container');
-            const messageBox = document.getElementById('message_box');
-            const applicationList = document.getElementById('application_list');
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Global state
+        let applications = JSON.parse(localStorage.getItem('applications')) || [];
+        let currentSection = 'overview';
+
+        // DOM elements
+        const sections = {
+            overview: document.getElementById('overview-section'),
+            applications: document.getElementById('applications-section'),
+            templates: document.getElementById('templates-section'),
+            interview: document.getElementById('interview-section')
+        };
+
+        const navButtons = {
+            overview: document.getElementById('nav-overview'),
+            applications: document.getElementById('nav-applications'),
+            templates: document.getElementById('nav-templates'),
+            interview: document.getElementById('nav-interview')
+        };
+
+        const elements = {
+            cvSummary: document.getElementById('cv_summary'),
+            coverLetterTemplate: document.getElementById('cover_letter_template'),
+            whyCompany: document.getElementById('why_company'),
+            whyThisPosition: document.getElementById('why_this_position'),
+            whyQualified: document.getElementById('why_qualified'),
+            applicationModal: document.getElementById('application-modal'),
+            draftModal: document.getElementById('draft-modal'),
+            applicationList: document.getElementById('application_list'),
+            toast: document.getElementById('toast')
+        };
+
+        // Navigation
+        function showSection(sectionName) {
+            // Hide all sections
+            Object.values(sections).forEach(section => section.classList.add('hidden'));
             
-            const cvSummaryEl = document.getElementById('cv_summary');
-            const coverLetterTemplateEl = document.getElementById('cover_letter_template');
-            const whyCompanyEl = document.getElementById('why_company');
-            const whyThisPositionEl = document.getElementById('why_this_position');
-            const whyQualifiedEl = document.getElementById('why_qualified');
+            // Show selected section
+            sections[sectionName].classList.remove('hidden');
+            sections[sectionName].classList.add('fade-in');
             
-            // Function to load data from localStorage
-            const loadData = () => {
-                const savedCvSummary = localStorage.getItem('cvSummary');
-                const savedCoverLetterTemplate = localStorage.getItem('coverLetterTemplate');
-                const savedInterviewAnswers = localStorage.getItem('interviewAnswers');
+            // Update nav buttons
+            Object.values(navButtons).forEach(btn => {
+                btn.classList.remove('bg-primary-600', 'text-white');
+                btn.classList.add('text-gray-600', 'hover:text-gray-900');
+            });
+            
+            navButtons[sectionName].classList.add('bg-primary-600', 'text-white');
+            navButtons[sectionName].classList.remove('text-gray-600', 'hover:text-gray-900');
+            
+            currentSection = sectionName;
+        }
 
-                if (savedCvSummary) cvSummaryEl.value = savedCvSummary;
-                if (savedCoverLetterTemplate) coverLetterTemplateEl.value = savedCoverLetterTemplate;
-                if (savedInterviewAnswers) {
-                    const answers = JSON.parse(savedInterviewAnswers);
-                    whyCompanyEl.value = answers.whyCompany;
-                    whyThisPositionEl.value = answers.whyThisPosition;
-                    whyQualifiedEl.value = answers.whyQualified;
-                } else {
-                    // Pre-fill with the Vattenfall interview answers if no data is found
-                    whyCompanyEl.value = `My interest in [COMPANY NAME] is deeply rooted in its clear and inspiring mission: "fossil freedom". I am a purpose-driven engineer with a strong passion for sustainable infrastructure, and [COMPANY NAME]’s commitment to making fossil-free living possible within one generation resonates profoundly with my personal and professional goals. This is more than just a job for me; it's an opportunity to contribute my skills and expertise to a mission that I truly believe in.
+        // Event listeners for navigation
+        Object.keys(navButtons).forEach(key => {
+            navButtons[key].addEventListener('click', () => showSection(key));
+        });
 
-Furthermore, I am drawn to [COMPANY NAME]'s position as a leader in the renewable energy sector. The focus on developing, building, and operating Battery Energy Storage Systems (BESS) is at the forefront of the industry's advancements, and it's an area where I am eager to apply and expand my knowledge. The company's century-long history of modernizing our way of living through innovation and cooperation is a testament to its forward-thinking culture, and I am excited by the prospect of joining a team that is pushing the boundaries of technology in renewable energy storage.`;
+        // Quick actions
+        document.getElementById('quick-new-app').addEventListener('click', () => {
+            showSection('applications');
+            document.getElementById('new-application-btn').click();
+        });
+        document.getElementById('quick-templates').addEventListener('click', () => showSection('templates'));
+        document.getElementById('quick-interview').addEventListener('click', () => showSection('interview'));
 
-                    whyThisPositionEl.value = `This specific [JOB TITLE] role within the(....) team is an ideal next step for me because it directly combines my systems design and project management background with my passion for the renewable energy industry. The role's emphasis on technical execution, from design and feasibility to delivery oversight, aligns with my experience as a Senior Product Operations Lead, where I drove the end-to-end deployment of IoT-enabled devices. I am particularly excited by the opportunity to apply my expertise in optimizing operational efficiency and developing data-driven workflows to the crucial area of battery energy storage.
+        // Data persistence
+        function saveData() {
+            localStorage.setItem('cvSummary', elements.cvSummary.value);
+            localStorage.setItem('coverLetterTemplate', elements.coverLetterTemplate.value);
+            const interviewAnswers = {
+                whyCompany: elements.whyCompany.value,
+                whyThisPosition: elements.whyThisPosition.value,
+                whyQualified: elements.whyQualified.value
+            };
+            localStorage.setItem('interviewAnswers', JSON.stringify(interviewAnswers));
+        }
 
-The energy storage industry itself is a perfect fit for my skills and interests. As a "systems thinker," I am drawn to the complexity and strategic importance of BESS in ensuring power system stability and supporting smart grids. This role allows me to directly translate my skills in project lifecycle management, stakeholder collaboration, and continuous improvement into a sector that is vital for achieving a sustainable future.`;
+        function loadData() {
+            const savedCvSummary = localStorage.getItem('cvSummary');
+            const savedCoverLetterTemplate = localStorage.getItem('coverLetterTemplate');
+            const savedInterviewAnswers = localStorage.getItem('interviewAnswers');
 
-                    whyQualifiedEl.value = `I am well-qualified for this role based on my combined educational background, professional experience, and technical skills. The job description lists several key qualifications, and I possess a strong alignment with them:
+            if (savedCvSummary) elements.cvSummary.value = savedCvSummary;
+            if (savedCoverLetterTemplate) elements.coverLetterTemplate.value = savedCoverLetterTemplate;
+            
+            if (savedInterviewAnswers) {
+                const answers = JSON.parse(savedInterviewAnswers);
+                elements.whyCompany.value = answers.whyCompany || '';
+                elements.whyThisPosition.value = answers.whyThisPosition || '';
+                elements.whyQualified.value = answers.whyQualified || '';
+            }
 
-Education and Experience: I hold a Bachelor's in Electrical and Electronic Engineering and am currently pursuing a Master's in Engineering Management. With over three years of professional experience in engineering and operations roles, I have a solid foundation in the field, with a particular focus on systems and renewable energy.
+            // Set defaults if empty
+            if (!elements.cvSummary.value) {
+                elements.cvSummary.value = "A purpose-driven engineer and systems thinker with a rare blend of technical acumen, strategic patience, and human-centered design. I am seeking to apply my expertise to a mission-driven organization where I can contribute to building a better future.";
+            }
+            
+            if (!elements.coverLetterTemplate.value) {
+                elements.coverLetterTemplate.value = `Dear [Recruiter Name],
 
-Engineering and Project Management: As a Senior Product Operations Lead at Ilara Health, I led the deployment of over 2,000 devices using Agile project management frameworks. This demonstrates my ability to "drive the engineering and technical development of BESS projects" and ensure "highest engineering standards throughout the project lifecycle". My experience with tools like Jira, Notion, and Power BI also supports the responsibility of creating and refining engineering processes and methodologies.
-
-Technical and Soft Skills: My previous roles have given me hands-on experience with industrial equipment, motor control systems, and power systems. I have also developed strong interpersonal and communication skills, which are essential for stakeholder collaboration. My problem-solving skills and passion for technical excellence align perfectly with [COMPANY NAME]'s requirements for a successful candidate.
-I am confident that my blend of technical acumen, strategic patience, and practical experience in systems deployment makes me a strong candidate to help [COMPANY NAME] achieve its ambitious goals.`;
-                }
-
-                if (!cvSummaryEl.value) {
-                    cvSummaryEl.value = "A purpose-driven engineer and systems thinker with a rare blend of technical acumen, strategic patience, and human-centered design. I am seeking to apply my expertise to a mission-driven organization where I can contribute to building a better future.";
-                }
-                
-                if (!coverLetterTemplateEl.value) {
-                    coverLetterTemplateEl.value = `Dear [Recruiter Name],
-
-I am writing to express my strong interest in the [Job Title] role at [Company Name]. My experience in [Your Top Skill] and my passion for [Your Passion] make me a strong candidate for this position.
+I am writing to express my strong interest in the [Job Title] role at [Company Name]. My experience in systems design and project management, combined with my passion for sustainable technology, makes me a strong candidate for this position.
 
 [Customized paragraph about how your skills meet their needs.]
 
@@ -194,136 +443,265 @@ I have attached my CV for your review and look forward to the possibility of dis
 
 Best regards,
 Clifford Omari Ondieki`;
-                }
-            };
+            }
+        }
+
+        // Auto-save functionality
+        [elements.cvSummary, elements.coverLetterTemplate, elements.whyCompany, elements.whyThisPosition, elements.whyQualified].forEach(el => {
+            el.addEventListener('input', saveData);
+        });
+
+        // Toast notifications
+        function showToast(message, type = 'success') {
+            const toast = elements.toast;
+            const toastIcon = document.getElementById('toast-icon');
+            const toastMessage = document.getElementById('toast-message');
             
-            // Function to save data to localStorage
-            const saveData = () => {
-                localStorage.setItem('cvSummary', cvSummaryEl.value);
-                localStorage.setItem('coverLetterTemplate', coverLetterTemplateEl.value);
-                const interviewAnswers = {
-                    whyCompany: whyCompanyEl.value,
-                    whyThisPosition: whyThisPositionEl.value,
-                    whyQualified: whyQualifiedEl.value
-                };
-                localStorage.setItem('interviewAnswers', JSON.stringify(interviewAnswers));
-            };
-
-            loadData();
+            toastIcon.innerHTML = type === 'success' ? '<i data-lucide="check-circle" class="w-5 h-5 text-green-600"></i>' : '<i data-lucide="alert-circle" class="w-5 h-5 text-red-600"></i>';
+            toastMessage.textContent = message;
             
-            // Attach event listeners to all textareas to save data on input
-            [cvSummaryEl, coverLetterTemplateEl, whyCompanyEl, whyThisPositionEl, whyQualifiedEl].forEach(el => {
-                el.addEventListener('input', saveData);
-            });
+            toast.classList.remove('translate-y-full', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+            
+            lucide.createIcons();
+            
+            setTimeout(() => {
+                toast.classList.add('translate-y-full', 'opacity-0');
+                toast.classList.remove('translate-y-0', 'opacity-100');
+            }, 3000);
+        }
 
-            let applications = JSON.parse(localStorage.getItem('applications')) || [];
+        // Statistics calculation
+        function updateStats() {
+            const totalApps = applications.length;
+            const interviewCount = applications.filter(app => app.status === 'Interview').length;
+            const offerCount = applications.filter(app => app.status === 'Offer').length;
+            const successRate = totalApps > 0 ? Math.round((offerCount / totalApps) * 100) : 0;
 
-            function renderApplications() {
-                applicationList.innerHTML = '';
-                if (applications.length === 0) {
-                    applicationList.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-gray-500">No applications tracked yet.</td></tr>';
-                    return;
-                }
-                applications.forEach((app, index) => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${app.date}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${app.company}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${app.jobTitle}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">${app.status}</span>
+            document.getElementById('total-apps').textContent = totalApps;
+            document.getElementById('interview-count').textContent = interviewCount;
+            document.getElementById('offer-count').textContent = offerCount;
+            document.getElementById('success-rate').textContent = `${successRate}%`;
+        }
+
+        // Application management
+        function renderApplications() {
+            const tbody = elements.applicationList;
+            tbody.innerHTML = '';
+            
+            if (applications.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="px-6 py-12 text-center">
+                            <div class="flex flex-col items-center">
+                                <i data-lucide="inbox" class="w-12 h-12 text-gray-400 mb-4"></i>
+                                <p class="text-gray-500 text-lg font-medium">No applications yet</p>
+                                <p class="text-gray-400 text-sm">Create your first application to get started</p>
+                            </div>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <a href="${app.url}" class="text-indigo-600 hover:text-indigo-900 mr-4" target="_blank" rel="noopener noreferrer">View</a>
-                            <button onclick="deleteApplication(${index})" class="text-red-600 hover:text-red-900 transition-colors duration-200">Delete</button>
-                        </td>
-                    `;
-                    applicationList.appendChild(row);
-                });
+                    </tr>
+                `;
+                lucide.createIcons();
+                return;
             }
 
-            window.deleteApplication = (index) => {
+            applications.forEach((app, index) => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50 transition-colors';
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center mr-3">
+                                <i data-lucide="building" class="w-5 h-5 text-gray-600"></i>
+                            </div>
+                            <div>
+                                <div class="text-sm font-medium text-gray-900">${app.company}</div>
+                                ${app.notes ? `<div class="text-xs text-gray-500">${app.notes.substring(0, 50)}${app.notes.length > 50 ? '...' : ''}</div>` : ''}
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${app.jobTitle}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${app.date}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <select onchange="updateStatus(${index}, this.value)" class="status-${app.status.toLowerCase()} px-2 py-1 text-xs font-semibold rounded-full border-0 focus:ring-2 focus:ring-primary-500">
+                            <option value="Drafting" ${app.status === 'Drafting' ? 'selected' : ''}>Drafting</option>
+                            <option value="Applied" ${app.status === 'Applied' ? 'selected' : ''}>Applied</option>
+                            <option value="Interview" ${app.status === 'Interview' ? 'selected' : ''}>Interview</option>
+                            <option value="Offer" ${app.status === 'Offer' ? 'selected' : ''}>Offer</option>
+                            <option value="Rejected" ${app.status === 'Rejected' ? 'selected' : ''}>Rejected</option>
+                        </select>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${app.salaryRange || 'Not specified'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div class="flex items-center space-x-2">
+                            ${app.url ? `<a href="${app.url}" class="text-primary-600 hover:text-primary-900 transition-colors" target="_blank" rel="noopener noreferrer"><i data-lucide="external-link" class="w-4 h-4"></i></a>` : ''}
+                            <button onclick="editApplication(${index})" class="text-gray-600 hover:text-gray-900 transition-colors"><i data-lucide="edit" class="w-4 h-4"></i></button>
+                            <button onclick="deleteApplication(${index})" class="text-red-600 hover:text-red-900 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+            
+            lucide.createIcons();
+            updateStats();
+            updateRecentApplications();
+        }
+
+        function updateRecentApplications() {
+            const recentContainer = document.getElementById('recent-applications');
+            const recentApps = applications.slice(-3).reverse();
+            
+            if (recentApps.length === 0) {
+                recentContainer.innerHTML = '<p class="text-gray-500 text-center py-8">No applications yet. Create your first application to get started!</p>';
+                return;
+            }
+            
+            recentContainer.innerHTML = recentApps.map(app => `
+                <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                            <i data-lucide="building" class="w-4 h-4 text-gray-600"></i>
+                        </div>
+                        <div>
+                            <p class="font-medium text-gray-900">${app.company}</p>
+                            <p class="text-sm text-gray-500">${app.jobTitle}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <span class="status-${app.status.toLowerCase()} px-2 py-1 text-xs font-semibold rounded-full">${app.status}</span>
+                        <span class="text-sm text-gray-500">${app.date}</span>
+                    </div>
+                </div>
+            `).join('');
+            
+            lucide.createIcons();
+        }
+
+        // Modal management
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+
+        // Application form handling
+        document.getElementById('new-application-btn').addEventListener('click', () => {
+            openModal('application-modal');
+            // Clear form
+            ['company_name', 'job_title', 'job_url', 'recruiter_name', 'salary_range', 'notes'].forEach(id => {
+                document.getElementById(id).value = '';
+            });
+        });
+
+        document.getElementById('close-modal').addEventListener('click', () => closeModal('application-modal'));
+        document.getElementById('cancel-application').addEventListener('click', () => closeModal('application-modal'));
+        document.getElementById('close-draft-modal').addEventListener('click', () => closeModal('draft-modal'));
+
+        document.getElementById('save-application').addEventListener('click', () => {
+            const companyName = document.getElementById('company_name').value.trim();
+            const jobTitle = document.getElementById('job_title').value.trim();
+            const jobUrl = document.getElementById('job_url').value.trim();
+            const recruiterName = document.getElementById('recruiter_name').value.trim() || '[Recruiter Name]';
+            const salaryRange = document.getElementById('salary_range').value.trim();
+            const notes = document.getElementById('notes').value.trim();
+
+            if (!companyName || !jobTitle) {
+                showToast('Please enter both company name and job title', 'error');
+                return;
+            }
+
+            // Create new application
+            const newApplication = {
+                id: Date.now(),
+                date: new Date().toLocaleDateString(),
+                company: companyName,
+                jobTitle: jobTitle,
+                status: 'Drafting',
+                url: jobUrl,
+                salaryRange: salaryRange,
+                notes: notes,
+                recruiterName: recruiterName
+            };
+
+            applications.push(newApplication);
+            localStorage.setItem('applications', JSON.stringify(applications));
+
+            // Generate draft
+            const subject = `Application for ${jobTitle} at ${companyName}`;
+            const coverLetterBody = elements.coverLetterTemplate.value
+                .replace(/\[Recruiter Name\]/g, recruiterName)
+                .replace(/\[Job Title\]/g, jobTitle)
+                .replace(/\[Company Name\]/g, companyName);
+
+            document.getElementById('email_subject').value = subject;
+            document.getElementById('email_body').value = coverLetterBody;
+
+            closeModal('application-modal');
+            openModal('draft-modal');
+            renderApplications();
+            showToast('Application created and draft generated successfully!');
+        });
+
+        // Copy to clipboard
+        document.getElementById('copy_to_clipboard_btn').addEventListener('click', async () => {
+            const emailBody = document.getElementById('email_body').value;
+            try {
+                await navigator.clipboard.writeText(emailBody);
+                showToast('Cover letter copied to clipboard!');
+            } catch (err) {
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = emailBody;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                showToast('Cover letter copied to clipboard!');
+            }
+        });
+
+        // Application management functions
+        window.updateStatus = (index, newStatus) => {
+            applications[index].status = newStatus;
+            localStorage.setItem('applications', JSON.stringify(applications));
+            renderApplications();
+            showToast(`Status updated to ${newStatus}`);
+        };
+
+        window.deleteApplication = (index) => {
+            if (confirm('Are you sure you want to delete this application?')) {
                 applications.splice(index, 1);
                 localStorage.setItem('applications', JSON.stringify(applications));
                 renderApplications();
-            };
-
-            generateBtn.addEventListener('click', () => {
-                const companyName = document.getElementById('company_name').value.trim();
-                const jobTitle = document.getElementById('job_title').value.trim();
-                const recruiterName = document.getElementById('recruiter_name').value.trim() || '[Recruiter Name]';
-                const jobUrl = document.getElementById('job_url').value.trim();
-
-                if (!companyName || !jobTitle) {
-                    showMessage("Please enter both a company name and a job title.", "bg-red-50 border-red-400 text-red-800");
-                    return;
-                }
-                
-                // Add to tracker
-                const newApplication = {
-                    date: new Date().toLocaleDateString(),
-                    company: companyName,
-                    jobTitle: jobTitle,
-                    status: 'Drafting',
-                    url: jobUrl
-                };
-                applications.push(newApplication);
-                localStorage.setItem('applications', JSON.stringify(applications));
-                renderApplications();
-
-                // Generate email draft
-                const subject = `Application for ${jobTitle} at ${companyName}`;
-                const coverLetterBody = coverLetterTemplateEl.value
-                    .replace(/\[Recruiter Name\]/g, recruiterName)
-                    .replace(/\[Job Title\]/g, jobTitle)
-                    .replace(/\[Company Name\]/g, companyName)
-                    .replace(/\[Your Top Skill\]/g, 'systems design and emotional intelligence')
-                    .replace(/\[Your Passion\]/g, 'designing for trust and sustainability');
-
-                document.getElementById('email_subject').value = subject;
-                document.getElementById('email_body').value = coverLetterBody;
-                draftContainer.style.display = 'block';
-                showMessage("Application draft generated and added to tracker successfully. Please review and customize before sending.", "bg-green-50 border-green-400 text-green-800");
-
-                // Update interview answers with new job details
-                const updatedWhyCompany = whyCompanyEl.value
-                    .replace(/\[COMPANY NAME\]/g, companyName)
-                    .replace(/\[JOB TITLE\]/g, jobTitle);
-                
-                const updatedWhyThisPosition = whyThisPositionEl.value
-                    .replace(/\[COMPANY NAME\]/g, companyName)
-                    .replace(/\[JOB TITLE\]/g, jobTitle)
-                    .replace(/\[TOP SKILLS\]/g, 'systems design and project management');
-                
-                const updatedWhyQualified = whyQualifiedEl.value
-                    .replace(/\[COMPANY NAME\]/g, companyName)
-                    .replace(/\[JOB TITLE\]/g, jobTitle)
-                    .replace(/\[TOP SKILLS\]/g, 'engineering, operations, and project management');
-
-                whyCompanyEl.value = updatedWhyCompany;
-                whyThisPositionEl.value = updatedWhyThisPosition;
-                whyQualifiedEl.value = updatedWhyQualified;
-
-                saveData();
-            });
-
-            copyBtn.addEventListener('click', () => {
-                const emailBody = document.getElementById('email_body');
-                emailBody.select();
-                document.execCommand('copy');
-                showMessage("Email body copied to clipboard!", "bg-green-50 border-green-400 text-green-800");
-            });
-
-            function showMessage(text, classes) {
-                messageBox.style.display = 'block';
-                messageBox.className = `mt-8 p-4 rounded-lg shadow-inner border-l-4 transition-all duration-300 ${classes}`;
-                messageBox.querySelector('p').textContent = text;
-                setTimeout(() => {
-                    messageBox.style.display = 'none';
-                }, 5000);
+                showToast('Application deleted successfully');
             }
+        };
 
+        window.editApplication = (index) => {
+            const app = applications[index];
+            document.getElementById('company_name').value = app.company;
+            document.getElementById('job_title').value = app.jobTitle;
+            document.getElementById('job_url').value = app.url || '';
+            document.getElementById('recruiter_name').value = app.recruiterName || '';
+            document.getElementById('salary_range').value = app.salaryRange || '';
+            document.getElementById('notes').value = app.notes || '';
+            
+            // Remove the old application and open modal for editing
+            applications.splice(index, 1);
+            localStorage.setItem('applications', JSON.stringify(applications));
+            openModal('application-modal');
+        };
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadData();
             renderApplications();
+            lucide.createIcons();
         });
     </script>
 </body>
